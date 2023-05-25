@@ -9,10 +9,12 @@ import {
   getFirestore,
 } from "firebase/firestore";
 import "./task.styles.scss";
+import EditTask from "../edit-task/edit-task.component";
 
 const Task = () => {
   const [tasks, setTasks] = useState([]);
   const [createTask, setCreateTask] = useState([]);
+  const [checked, setChecked] = useState([]);
   const db = getFirestore();
   const collectionRef = collection(db, "tasks");
 
@@ -25,6 +27,7 @@ const Task = () => {
             id: doc.id,
           }));
           setTasks(tasksData);
+          setChecked(tasksData);
         })
         .catch((err) => {
           console.log(err);
@@ -60,6 +63,24 @@ const Task = () => {
     }
   };
 
+  const checkboxHandler = async (event) => {
+    console.log(event.target.name);
+    setChecked(state => {
+      const index = state.findIndex(checkbox => checkbox.id.toString() === event.target.name);
+      const newState = state.slice();
+
+      newState.splice(index, 1, {
+        ...state[index], 
+        isChecked: !state[index]?.isChecked
+      });
+      setTasks(newState);
+      return newState;
+    })
+
+  }
+
+  console.log("tasks", tasks);
+
   return (
     <>
       <div className="container">
@@ -74,25 +95,20 @@ const Task = () => {
               >
                 Add Task
               </button>
-              {tasks.map(({ task, id }) => (
+              {tasks.map(({ task, id, isChecked }) => (
                 <div className="todo-list" key={id}>
                   <div className="todo-item">
                     <hr />
                     <span>
                       <div className="checker">
                         <span>
-                          <input type="checkbox" />
+                          <input type="checkbox" defaultValue={isChecked} onChange={(event) => checkboxHandler(event)} name={id}/>
                         </span>
                       </div>
                       {task}
                     </span>
                     <span className="float-end mx-3">
-                      <button
-                        type="button"
-                        className="btn btn-primary float-end mx-3"
-                      >
-                        Edit
-                      </button>
+                      <EditTask task={task} id={id} />
                       <button
                         onClick={() => deleteTask(id)}
                         type="button"
@@ -120,7 +136,7 @@ const Task = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h1 className="modal-title fs-5" id="addTaskLabel">
-                  Modal title
+                  Add Task
                 </h1>
                 <button
                   type="button"
