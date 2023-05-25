@@ -7,6 +7,10 @@ import {
   doc,
   getDocs,
   getFirestore,
+  orderBy,
+  query,
+  runTransaction,
+  serverTimestamp,
 } from "firebase/firestore";
 import "./task.styles.scss";
 import EditTask from "../edit-task/edit-task.component";
@@ -20,7 +24,9 @@ const Task = () => {
 
   useEffect(() => {
     const getTasks = async () => {
-      await getDocs(collectionRef)
+      const q = query(collectionRef, orderBy('timestamp'));
+
+      await getDocs(q)
         .then((task) => {
           let tasksData = task.docs.map((doc) => ({
             ...doc.data(),
@@ -44,6 +50,7 @@ const Task = () => {
       await addDoc(collectionRef, {
         task: createTask,
         isChecked: false,
+        timestamp: serverTimestamp()
       });
       window.location.reload();
     } catch (err) {
@@ -63,19 +70,36 @@ const Task = () => {
     }
   };
 
+  //Checkbox Handler
   const checkboxHandler = async (event) => {
     console.log(event.target.name);
     setChecked(state => {
       const index = state.findIndex(checkbox => checkbox.id.toString() === event.target.name);
-      const newState = state.slice();
+      let newState = state.slice();
 
       newState.splice(index, 1, {
         ...state[index], 
-        isChecked: !state[index]?.isChecked
+        isChecked: !state[index].isChecked
       });
       setTasks(newState);
       return newState;
     })
+
+    //Persist checkbox state
+    try {
+      const docRef = doc(db, "tasks", event.target.name);
+      await runTransaction(db, async(transaction) => {
+        const taskDoc = await transaction.get(docRef);
+        if (!taskDoc.exists()){
+          throw new Error("Document does not exist");
+        }
+        const newValue = !taskDoc.data().isChecked;
+        console.log('value of newValue: ' + newValue);
+        transaction.update(docRef, {isChecked: newValue});
+      });
+    } catch (err) {
+      console.log("Failed to check task", err);
+    }
 
   }
 
@@ -95,17 +119,18 @@ const Task = () => {
               >
                 Add Task
               </button>
-              {tasks.map(({ task, id, isChecked }) => (
+              {tasks.map(({ task, id, isChecked, timestamp }) => (
                 <div className="todo-list" key={id}>
                   <div className="todo-item">
                     <hr />
-                    <span>
+                    <span className={`${isChecked === true ? 'done' : ''}`}>
                       <div className="checker">
                         <span>
-                          <input type="checkbox" defaultValue={isChecked} onChange={(event) => checkboxHandler(event)} name={id}/>
+                          <input type="checkbox" checked={isChecked} onChange={(event) => checkboxHandler(event)} name={id}/>
                         </span>
                       </div>
-                      {task}
+                      {task} <br />
+                      <i>{new Date(timestamp.seconds * 1000).toLocaleString()}</i>
                     </span>
                     <span className="float-end mx-3">
                       <EditTask task={task} id={id} />

@@ -20,7 +20,7 @@ const EditTask = ({ task, id }) => {
 
     try {
       const taskDocument = doc(db, "tasks", id);
-      
+
       await updateDoc(taskDocument, {
         task: updatedTask,
         isChecked: false,
