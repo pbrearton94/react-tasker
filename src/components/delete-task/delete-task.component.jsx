@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 import React from "react";
 
 /**
