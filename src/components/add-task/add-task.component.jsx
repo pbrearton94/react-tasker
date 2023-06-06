@@ -1,31 +1,31 @@
-import React, { useState } from "react";
-import testApp from "../../services/firebase.config";
 import {
-  doc,
+  addDoc,
+  collection,
   getFirestore,
-  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
+import React, { useState } from "react";
 
 /**
  * 
- * The edit task component, responsible for providing a modal to modify the selected todo list item
+ * The add task component, responsible for providing a modal to add a new item to the todo list
  *
- * @param {task} task the task to be modified from the todo list
- * @param {id} id the id associated with the task to be modified
  */
-const EditTask = ({ task, id }) => {
-  const [updatedTask, setUpdatedTask] = useState([task]);
-  const db = getFirestore();
+const AddTask = () => {
+  const [createTask, setCreateTask] = useState([]);
 
-  const updateTask = async (event) => {
+  const db = getFirestore();
+  const collectionRef = collection(db, "tasks");
+
+  //Add Task Handler
+  const submitTask = async (event) => {
     event.preventDefault();
 
     try {
-      const taskDocument = doc(db, "tasks", id);
-
-      await updateDoc(taskDocument, {
-        task: updatedTask,
+      await addDoc(collectionRef, {
+        task: createTask,
         isChecked: false,
+        timestamp: serverTimestamp(),
       });
       window.location.reload();
     } catch (err) {
@@ -39,23 +39,23 @@ const EditTask = ({ task, id }) => {
         type="button"
         className="btn btn-primary"
         data-bs-toggle="modal"
-        data-bs-target={`#edit-id${id}`}
+        data-bs-target="#addTask"
       >
-        Update Task
+        Add Task
       </button>
       <div
         className="modal fade"
-        id={`edit-id${id}`}
+        id="addTask"
         tabIndex="-1"
-        aria-labelledby="updateTaskLabel"
+        aria-labelledby="addTaskLabel"
         aria-hidden="true"
       >
         <div className="modal-dialog">
-          <form className="d-flex">
+          <form onSubmit={submitTask} className="d-flex">
             <div className="modal-content">
               <div className="modal-header">
-                <h1 className="modal-title fs-5" id="updateTaskLabel">
-                  Update Task
+                <h1 className="modal-title fs-5" id="addTaskLabel">
+                  Add Task
                 </h1>
                 <button
                   type="button"
@@ -66,11 +66,10 @@ const EditTask = ({ task, id }) => {
               </div>
               <div className="modal-body">
                 <input
+                  onChange={(event) => setCreateTask(event.target.value)}
                   type="text"
                   className="form-control"
-                  placeholder="Update a task"
-                  defaultValue={updatedTask}
-                  onChange={(event) => setUpdatedTask(event.target.value)}
+                  placeholder="Add a task"
                 />
               </div>
               <div className="modal-footer">
@@ -81,12 +80,8 @@ const EditTask = ({ task, id }) => {
                 >
                   Close
                 </button>
-                <button
-                  onClick={(event) => updateTask(event)}
-                  type="submit"
-                  className="btn btn-primary"
-                >
-                  Update Task
+                <button type="submit" className="btn btn-primary">
+                  Add Task
                 </button>
               </div>
             </div>
@@ -97,4 +92,4 @@ const EditTask = ({ task, id }) => {
   );
 };
 
-export default EditTask;
+export default AddTask;
