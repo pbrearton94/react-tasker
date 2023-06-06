@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
   orderBy,
   query,
   runTransaction,
-  serverTimestamp,
 } from "firebase/firestore";
 import "./task.styles.scss";
 import EditTask from "../edit-task/edit-task.component";
